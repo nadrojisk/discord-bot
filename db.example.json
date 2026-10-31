@@ -1,0 +1,24 @@
+{
+  "triggers": {
+    "greeting": [
+      "hi",
+      "hello",
+      "hey",
+      "sup"
+    ],
+    "bot": [
+      "bot"
+    ]
+  },
+  "responses": {
+    "greeting": [
+      "Hello",
+      "Hey there",
+      "Hi"
+    ],
+    "bot": [
+      "Did someone call?",
+      "Beep boop."
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+    discord-bot:
+        build: .
+        restart: always
+        container_name: discord-bot
+        networks:
+            - traefik-public
+        # Pass through secrets as environment variables. When running in GitHub Actions,
+        # set these using repository secrets and the `env` map in your workflow.
+        environment:
+            - DISCORD_TOKEN
+            - APP_ID
+            - GUILD_ID
+            - LOG_CHANNEL_ID
+            - PREFIX
+            - HEALTH_PORT
+        # Optionally load from an env_file for local dev (not committed, not required in CI)
+        env_file:
+            - path: .env
+              required: false
+
+networks:
+    traefik-public:
+        external: true

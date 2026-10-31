@@ -1,0 +1,22 @@
+{
+  "name": "discord-bot-js",
+  "version": "1.0.0",
+  "description": "A Discord bot built in JavaScript that provides various functionalities including games, movies, and user management.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.0.0",
+    "dotenv": "^10.0.0",
+    "jimp": "^0.22.11"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "discord",
+    "bot",
+    "javascript"
+  ],
+  "author": "Jordan Sosnowski"
+}

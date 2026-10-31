@@ -1,0 +1,69 @@
+name: Publish image
+
+# Releasing is bumping "version" in package.json and pushing to main. If v<version> is not a git tag yet, this builds the image,
+# pushes it to GitHub Container Registry as ghcr.io/nadrojisk/discord-bot:<version>, then creates the tag.
+# A push that does not change the version publishes nothing, and a version that was already released is never overwritten.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # re-run by hand if a publish failed before the tag was created
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write # create the version tag
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Is this version released yet?
+        id: version
+        run: |
+          version="$(jq -r .version package.json)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null; then
+            echo "v$version is already released; nothing to publish."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.version.outputs.publish == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - if: steps.version.outputs.publish == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.version.outputs.publish == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/nadrojisk/discord-bot
+          tags: type=raw,value=${{ steps.version.outputs.version }}
+          flavor: latest=false
+
+      - if: steps.version.outputs.publish == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Last, so a failed build leaves no tag and the next push (or a manual run) tries again.
+      - name: Tag the release
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
